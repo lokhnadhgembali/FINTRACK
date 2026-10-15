@@ -27,7 +27,10 @@ Students, freelancers, and individuals who want a self-hosted, data-driven alter
 
 | Dashboard | MongoDB Atlas | Optimization Test |
 |---|---|---|
-| ![Dashboard](docs/images/dashboard.png) | ![MongoDB Atlas](docs/images/mongodb_atlas.png) | ![Optimization Test](docs/images/optimization_test.png) |
+| ![Dashboard](<img width="1917" height="930" alt="01_dashboard_overview" src="https://github.com/user-attachments/assets/f3409a26-d21c-4290-85fd-acca3e03e663" />
+) | ![MongoDB Atlas](<img width="1917" height="928" alt="05_atlas_collections" src="https://github.com/user-attachments/assets/246b3d29-98b2-458e-8dae-dd2782b1da21" />
+) | ![Optimization Test](<img width="1917" height="1047" alt="06_index_optimization" src="https://github.com/user-attachments/assets/8c5f6664-66a9-4504-b7ac-74a578d9e056" />
+) |
 
 > 📁 Place your screenshots in `docs/images/` to render them above.
 
