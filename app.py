@@ -413,6 +413,67 @@ def month_num(dt):
         return 0
 
 
+def compute_month_delta(txns, txn_type, ref_dt=None):
+    """
+    Compute the percentage change in total `txn_type` ('income'/'expense'/'savings')
+    between the current calendar month and the previous calendar month.
+
+    Returns a tuple (delta_pct: float | None, direction: str).
+    `delta_pct` is None when there is no prior-month data (avoids misleading numbers).
+    `direction` is '+' for increase, '-' for decrease, or '' when N/A.
+    """
+    if ref_dt is None:
+        ref_dt = datetime.now()
+
+    cur_year, cur_month = ref_dt.year, ref_dt.month
+    if cur_month == 1:
+        prev_year, prev_month = cur_year - 1, 12
+    else:
+        prev_year, prev_month = cur_year, cur_month - 1
+
+    def total_for(year, month, t_type):
+        total = 0.0
+        for t in txns:
+            dt = t.get("date")
+            if dt is None:
+                continue
+            try:
+                ty, tm = dt.year, dt.month
+            except AttributeError:
+                continue
+            if ty == year and tm == month:
+                if t_type in ("income", "expense"):
+                    if t.get("type") == t_type:
+                        total += t.get("amount", 0)
+                elif t_type == "savings":
+                    if t.get("type") == "income":
+                        total += t.get("amount", 0)
+                    elif t.get("type") == "expense":
+                        total -= t.get("amount", 0)
+        return total
+
+    cur_val  = total_for(cur_year,  cur_month,  txn_type)
+    prev_val = total_for(prev_year, prev_month, txn_type)
+
+    if prev_val == 0:
+        return None, ""
+
+    delta_pct = ((cur_val - prev_val) / abs(prev_val)) * 100
+    direction = "+" if delta_pct >= 0 else "-"
+    return abs(delta_pct), direction
+
+
+def render_delta_badge(delta_pct, direction, color_up="#16a34a", color_down="#dc2626"):
+    """Return an HTML snippet for the month-over-month delta badge, or empty string if N/A."""
+    if delta_pct is None:
+        return '<p style="font-size:11px;color:#94a3b8;margin:3px 0 0;font-weight:500;">vs. last month: N/A</p>'
+    arrow   = "▲" if direction == "+" else "▼"
+    color   = color_up if direction == "+" else color_down
+    label   = "vs. last month"
+    return (f'<p style="font-size:11px;color:{color};margin:3px 0 0;font-weight:600;">'
+            f'{arrow} {direction}{delta_pct:.1f}% {label}</p>')
+
+
 # ── DATA LOADING (CACHED) ─────────────────────────────────────────────────────
 
 @st.cache_data(ttl=30)
@@ -613,9 +674,15 @@ def render_dashboard():
     active_goals   = sum(1 for g in goals if not g.get("completed", False))
     goal_pct       = int((total_goals - active_goals) / total_goals * 100) if total_goals else 0
 
+    # Compute dynamic month-over-month deltas from actual transaction data
+    inc_delta,  inc_dir  = compute_month_delta(txns, "income")
+    exp_delta,  exp_dir  = compute_month_delta(txns, "expense")
+    sav_delta,  sav_dir  = compute_month_delta(txns, "savings")
+
     k1, k2, k3, k4 = st.columns(4)
 
     with k1:
+        inc_badge = render_delta_badge(inc_delta, inc_dir, color_up="#16a34a", color_down="#dc2626")
         st.markdown(f"""
         <div style="display:flex;align-items:center;gap:12px;">
           <div style="width:46px;height:46px;border-radius:12px;background:#dcfce7;
@@ -628,11 +695,12 @@ def render_dashboard():
           <div style="flex:1;min-width:0;">
             <p style="font-size:12px;color:#64748b;margin:0;font-weight:600;">Total Income</p>
             <h3 style="font-size:20px;font-weight:800;color:#0f5132;margin:2px 0 0;line-height:1.1;">{fmt_inr(total_income)}</h3>
-            <p style="font-size:11px;color:#16a34a;margin:3px 0 0;font-weight:600;">▲ +12% this month</p>
+            {inc_badge}
           </div>
         </div>""", unsafe_allow_html=True)
 
     with k2:
+        exp_badge = render_delta_badge(exp_delta, exp_dir, color_up="#dc2626", color_down="#16a34a")
         st.markdown(f"""
         <div style="display:flex;align-items:center;gap:12px;">
           <div style="width:46px;height:46px;border-radius:12px;background:#fee2e2;
@@ -645,11 +713,12 @@ def render_dashboard():
           <div style="flex:1;min-width:0;">
             <p style="font-size:12px;color:#64748b;margin:0;font-weight:600;">Total Expenses</p>
             <h3 style="font-size:20px;font-weight:800;color:#dc2626;margin:2px 0 0;line-height:1.1;">{fmt_inr(total_expenses)}</h3>
-            <p style="font-size:11px;color:#dc2626;margin:3px 0 0;font-weight:600;">▲ +8% this month</p>
+            {exp_badge}
           </div>
         </div>""", unsafe_allow_html=True)
 
     with k3:
+        sav_badge = render_delta_badge(sav_delta, sav_dir, color_up="#16a34a", color_down="#dc2626")
         st.markdown(f"""
         <div style="display:flex;align-items:center;gap:12px;">
           <div style="width:46px;height:46px;border-radius:12px;background:#dbeafe;
@@ -662,7 +731,7 @@ def render_dashboard():
           <div style="flex:1;min-width:0;">
             <p style="font-size:12px;color:#64748b;margin:0;font-weight:600;">Total Savings</p>
             <h3 style="font-size:20px;font-weight:800;color:#0284c7;margin:2px 0 0;line-height:1.1;">{fmt_inr(total_savings)}</h3>
-            <p style="font-size:11px;color:#16a34a;margin:3px 0 0;font-weight:600;">▲ +20% this month</p>
+            {sav_badge}
           </div>
         </div>""", unsafe_allow_html=True)
 
