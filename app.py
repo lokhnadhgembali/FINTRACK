@@ -37,8 +37,15 @@ st.markdown("""
 
 html, body, [class*="css"] { font-family: 'Inter', sans-serif !important; }
 
-/* ── Chrome / header ── */
-#MainMenu, footer, header { visibility: hidden; }
+/* ── Chrome / header / decoration (Remove all top viewport gap) ── */
+#MainMenu, footer, header, [data-testid="stHeader"], [data-testid="stDecoration"] {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
 
 /* ── App background (Matching Screenshot: Soft Mint Gradient across all pages) ── */
 .stApp,
@@ -47,8 +54,13 @@ section.main {
     background: linear-gradient(135deg, #d8eee2 0%, #e4f2eb 100%) !important;
 }
 
+/* Target the main content container and remove default top padding */
+.block-container,
 .main .block-container {
-    padding: 1.2rem 2rem 2.5rem !important;
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+    padding-left: 1.2rem !important;
+    padding-right: 1.2rem !important;
     max-width: 100% !important;
 }
 
@@ -93,15 +105,63 @@ section[data-testid="stSidebar"] {
     border-right: 1px solid #d0e4da !important;
 }
 
-[data-testid="collapsedControl"],
+/* Remove all sidebar header, collapse button, and top gap */
+[data-testid="stSidebarHeader"],
 [data-testid="stSidebarCollapseButton"],
+[data-testid="collapsedControl"],
 button[kind="header"] {
     display: none !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
 }
 
+/* Pull left sidebar higher up toward the top of viewport */
 [data-testid="stSidebar"] > div:first-child,
-section[data-testid="stSidebar"] > div:first-child {
-    padding: 0 !important;
+section[data-testid="stSidebar"] > div:first-child,
+[data-testid="stSidebarContent"],
+[data-testid="stSidebar"] [data-testid="stSidebarUserContent"],
+[data-testid="stSidebar"] .block-container,
+section[data-testid="stSidebar"] .block-container {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    margin-top: 0 !important;
+    height: 100% !important;
+}
+
+/* Sidebar flex container spanning full viewport height */
+[data-testid="stSidebar"] div[data-testid="stVerticalBlock"] {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: calc(100vh - 12px) !important;
+    height: calc(100vh - 12px) !important;
+    justify-content: flex-start !important;
+    box-sizing: border-box !important;
+}
+
+/* 1. Logo with exact 2px gap from top */
+[data-testid="stSidebar"] div[data-testid="stVerticalBlock"] > div[data-testid="stElementContainer"]:first-child {
+    padding-top: 2px !important;
+    margin-top: 0 !important;
+    margin-bottom: 2px !important;
+}
+
+/* 2. Middle elements: navigation radio menu */
+[data-testid="stSidebar"] div[data-testid="stVerticalBlock"] > div[data-testid="stElementContainer"]:nth-child(2) {
+    margin-top: 2px !important;
+    margin-bottom: auto !important;
+}
+
+/* 3. Last small card pushed down to the very bottom */
+[data-testid="stSidebar"] div[data-testid="stVerticalBlock"] > div[data-testid="stElementContainer"]:last-child {
+    margin-top: auto !important;
+    margin-bottom: 12px !important;
+    padding-bottom: 0 !important;
 }
 
 /* ── NAVIGATION STYLING (MATCHING REFERENCE DESIGN) ───────────────────────── */
@@ -406,10 +466,10 @@ if st.session_state.get("pending_nav"):
 # ── SIDEBAR ───────────────────────────────────────────────────────────────────
 
 with st.sidebar:
-    # Branding
-    st.markdown("""<div style="padding:16px 10px 14px;text-align:center;border-bottom:1px solid #e8f5e9;margin-bottom:8px;">
-<div style="display:flex;justify-content:center;margin-bottom:2px;">
-<svg width="84" height="84" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    # Branding (Logo 2px from top, headings in middle)
+    st.markdown("""<div style="margin-top:0px;padding:2px 10px 8px;text-align:center;border-bottom:1px solid #e8f5e9;margin-bottom:6px;">
+<div style="display:flex;justify-content:center;margin-top:0px;margin-bottom:0px;">
+<svg width="74" height="74" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
 <ellipse cx="50" cy="86" rx="34" ry="6" fill="#e2e8f0" opacity="0.6"/>
 <path d="M28 85 C32 79, 68 79, 72 85 C68 89, 32 89, 28 85 Z" fill="#8c7853" opacity="0.9"/>
 <path d="M25 76 C25 79.5, 43 79.5, 43 76 L43 80.5 C43 84, 25 84, 25 80.5 Z" fill="#d97706" stroke="#0f5132" stroke-width="1.2"/>
@@ -432,8 +492,8 @@ with st.sidebar:
 <path d="M47 35 Q61 30 73 31" fill="none" stroke="#14532d" stroke-width="1" stroke-linecap="round"/>
 </svg>
 </div>
-<div style="font-size:1.65rem;font-weight:800;color:#0b4f2f;letter-spacing:0.5px;margin-top:6px;line-height:1.1;">FINTRACK</div>
-<div style="font-size:0.76rem;font-weight:500;color:#334155;margin-top:5px;">Track Today, Build Tomorrow</div>
+<div style="font-size:1.6rem;font-weight:800;color:#0b4f2f;letter-spacing:0.5px;margin-top:3px;line-height:1.1;">FINTRACK</div>
+<div style="font-size:0.76rem;font-weight:500;color:#334155;margin-top:3px;margin-bottom:2px;">Track Today, Build Tomorrow</div>
 </div>""", unsafe_allow_html=True)
 
     selected = st.radio(
@@ -443,10 +503,9 @@ with st.sidebar:
         label_visibility="collapsed",
     )
 
-    # Bottom motivational card
-    st.markdown("<br>", unsafe_allow_html=True)
+    # Bottom motivational card (pinned down at the bottom)
     st.markdown("""
-    <div style="background:linear-gradient(180deg, #e4f4ec 0%, #ccead9 100%);border-radius:14px;padding:16px 12px 0px;margin:12px 10px 16px;text-align:center;border:1.5px solid #b8d8c8;box-shadow:0 2px 6px rgba(15,81,50,0.05);overflow:hidden;position:relative;">
+    <div style="background:linear-gradient(180deg, #e4f4ec 0%, #ccead9 100%);border-radius:14px;padding:12px 10px 0px;margin:8px 10px 6px;text-align:center;border:1.5px solid #b8d8c8;box-shadow:0 2px 6px rgba(15,81,50,0.05);overflow:hidden;position:relative;">
         <div style="display:flex;justify-content:center;margin-bottom:6px;">
             <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
                 <ellipse cx="16" cy="26" rx="7" ry="2.5" fill="#ca8a04"/>
